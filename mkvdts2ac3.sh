@@ -401,7 +401,11 @@ DEST=$(dirname "$MKVFILE")
 NAME=$(basename "$MKVFILE" .mkv)
 
 # Setup temporary files
-DTSFILE="$WD/$NAME.dts"
+if [ $EAC3 = 1 ]; then
+	DTSFILE="$WD/$NAME.eac3"
+else
+	DTSFILE="$WD/$NAME.dts"
+fi
 AC3FILE="$WD/$NAME.ac3"
 TCFILE="$WD/$NAME.tc"
 NEWFILE="$WD/$NAME.new.mkv"
@@ -460,7 +464,7 @@ else
 fi
 # Get the specified DTS track's information
 doprint ""
-doprint $"Extract track information for selected DTS track."
+doprint $"Extract track information for selected $FORMAT track."
 doprint "> mkvinfo \"$MKVFILE\""
 
 INFO=$"INFO" #Value for debugging
@@ -499,12 +503,12 @@ doprint "RESULT:DTSLANG=$DTSLANG"
 if [ -z $DTSNAME ]; then
 	# Get the name for the DTS track specified
 	doprint ""
-	doprint $"Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
-	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'"''
+	doprint $"Extract name for selected $FORMAT track. Change $FORMAT to AC3 and update bitrate if present."
+	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/$FORMAT/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'"''
 	DTSNAME="DTSNAME" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
-		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
+		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/$FORMAT/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
 	fi
 	doprint "RESULT:DTSNAME=$DTSNAME"
 fi
@@ -530,38 +534,38 @@ doprint "RESULT:DELAY=$DELAY"
 
 # Extract the DTS track
 doprint ""
-doprint $"Extract DTS file from MKV."
+doprint $"Extract $FORMAT file from MKV."
 doprint "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
 
 dopause
 if [ $EXECUTE = 1 ]; then
-	color YELLOW; echo $"Extracting DTS Track: "; color OFF
+	color YELLOW; echo $"Extracting $FORMAT Track: "; color OFF
 	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" 2>&1|perl -ne '$/="\015";next unless /Progress/;$|=1;print "%s\r",$_' #Use Perl to change EOL from \n to \r show Progress %
-	checkerror $? $"Extracting DTS track failed." 1
-	timestamp $"DTS track extracting took:	"
+	checkerror $? $"Extracting $FORMAT track failed." 1
+	timestamp $"$FORMAT track extracting took:	"
 fi
 
 # ------ CONVERSION ------
 # Convert DTS to AC3
-doprint $"Converting DTS to AC3."
+doprint $"Converting $FORMAT to AC3."
 doprint "> ffmpeg -i \"$DTSFILE\" -acodec ac3 -ac 6 -ab 448k \"$AC3FILE\""
 
 dopause
 if [ $EXECUTE = 1 ]; then
-	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
+	color YELLOW; echo $"Converting $FORMAT to AC3:"; color OFF
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>&1|perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s' #run ffmpeg and only show Progress %. Need perl to read \r end of lines
-	checkerror $? $"Converting the DTS file to AC3 failed" 1
+	checkerror $? $"Converting the $FORMAT file to AC3 failed" 1
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
 	if [ ! -z $KEEPDTS ]; then
-		color YELLOW; echo $"Moving DTS track to MKV directory."; color OFF
+		color YELLOW; echo $"Moving $FORMAT track to MKV directory."; color OFF
 		$RSYNCCMD "$DTSFILE" "$DEST"
-		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
+		checkerror $? $"There was an error copying the $FORMAT track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
 	fi
 	cleanup "$DTSFILE"
 	echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
-	timestamp $"DTS track conversion took:	"
+	timestamp $"$FORMAT track conversion took:	"
 fi
 
 # Check there is enough free space for AC3+MKV
@@ -755,7 +759,7 @@ NEWFILESIZE=$($DUCMD "$MKVFILE" | cut -f1) # NEWFILESIZE isn't available in some
 if [ $EXECUTE = 1 -a $PAUSE = 0 ];then
 	color YELLOW; printf $"Filesize summary:\n"; color OFF
 	printf "%23s %15d KB\n" $"Original Filesize:" $MKVFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
-	printf "%23s %15d KB\n" $"Extracted DTS Filesize:" $DTSFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
+	printf "%23s %15d KB\n" $"Extracted $FORMAT Filesize:" $DTSFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
 	printf "%23s %15d KB\n" $"Converted AC3 Filesize:" $AC3FILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
 	printf "%23s %15d KB\n" $"Final Filesize:" $NEWFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
 fi
