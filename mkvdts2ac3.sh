@@ -416,13 +416,21 @@ doprint $"WORKING DIRECTORY: $WD"
 # ------ GATHER DATA ------
 # If the track id wasn't specified via command line then search for the first DTS audio track
 if [ -z $DTSTRACK ]; then
+	if [ $EAC3 = 1 ]; then
+		REGEXCMD="mkvinfo \"$MKVFILE\" | grep -m 1 -B 10 'Codec ID: A_EAC3' | grep 'Track number' | tail -1 | rev | cut -d ' ' -f1 | cut -d ')' -f 2 | rev"	
+	else
+		REGEXCMD="mkvmerge -i \"$MKVFILE\" | grep -m 1 \"${AUDIOTRACKPREFIX}DTS)\" | cut -d ':' -f 1 | cut -d ' ' -f 3"
+	fi
+	
+
 	doprint ""
-	doprint $"Find first DTS track in MKV file."
-	doprint "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"${AUDIOTRACKPREFIX}DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
+	doprint $"Find first $FORMAT track in MKV file."
+	doprint "> $REGEXCMD"
 	DTSTRACK="DTSTRACK" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
-		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "${AUDIOTRACKPREFIX}DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
+		#DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "${AUDIOTRACKPREFIX}DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
+		DTSTRACK=$(eval $REGEXCMD)
 
 		# Check to make sure there is a DTS track in the MVK
 		if [ -z $DTSTRACK ]; then
