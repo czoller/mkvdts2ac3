@@ -1,3 +1,12 @@
+Fork
+====
+
+Fork of https://github.com/JakeWharton/mkvdts2ac3
+with changes by czoller.
+
+Original README
+===============
+
 `mkvdts2ac3` is a bash script which can be used for converting the DTS in
 Matroska (MKV) files to AC3. It provides you with a healthy set of options
 for controlling the resulting file.

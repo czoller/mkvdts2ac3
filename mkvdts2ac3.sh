@@ -4,7 +4,10 @@
 #         Chris Hoekstra <chris.hoekstra@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.6.0
+#
+# Modified by czoller: http://github.com/czoller/mkvdts2ac3/
+#
+# Version: 1.6.1-czoller
 # License:
 #   Copyright 2011 Jake Wharton
 #
@@ -22,8 +25,9 @@
 
 
 # Display version header
-echo "mkvdts2ac3-1.6.0 - by Jake Wharton <jakewharton@gmail.com> and"
-echo "                      Chris Hoekstra <chris.hoekstra@gmail.com>"
+echo "mkvdts2ac3-1.6.1-czoller - by Jake Wharton <jakewharton@gmail.com> and"
+echo "                           Chris Hoekstra <chris.hoekstra@gmail.com>"
+echo "Modified by czoller: http://github.com/czoller/mkvdts2ac3"
 echo
 
 # Debugging flags
@@ -172,7 +176,7 @@ checkerror() {
 	if [ $1 -ne 0 ]; then
 		error "$2"
 		# if optional BOOL then exit, otherwise return errorcode 1
-		if [ $3 -gt 0 ]; then
+		if [ "$3" -gt 0 ]; then
 			# honor KEEPDTS
 			if [ -z $KEEPDTS ]; then
 				cleanup "$DTSFILE"
