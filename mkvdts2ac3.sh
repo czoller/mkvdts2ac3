@@ -411,7 +411,7 @@ TCFILE="$WD/$NAME.tc"
 NEWFILE="$WD/$NAME.new.mkv"
 
 doprint $"MKV FILE: $MKVFILE"
-doprint $"DTS FILE: $DTSFILE"
+doprint $"$FORMAT FILE: $DTSFILE"
 doprint $"AC3 FILE: $AC3FILE"
 doprint $"TIMECODE: $TCFILE"
 doprint $"NEW FILE: $NEWFILE"
@@ -433,12 +433,11 @@ if [ -z $DTSTRACK ]; then
 	DTSTRACK="DTSTRACK" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
-		#DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "${AUDIOTRACKPREFIX}DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
 		DTSTRACK=$(eval $REGEXCMD)
 
 		# Check to make sure there is a DTS track in the MVK
 		if [ -z $DTSTRACK ]; then
-			error $"There are no DTS tracks in '$MKVFILE'."
+			error $"There are no $FORMAT tracks in '$MKVFILE'."
 			exit 1
 		fi
 	fi
