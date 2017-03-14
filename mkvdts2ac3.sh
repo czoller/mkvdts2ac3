@@ -37,6 +37,7 @@ PAUSE=0
 EXECUTE=1
 
 # Default values
+EAC3=0
 PRIORITY=0
 FORCE=0
 NOCOLOR=0
@@ -69,6 +70,7 @@ displayhelp() {
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
+	echo "     --eac3           Convert E-AC3 track to AC3 instead of DTS (all DTS related options also applies to E-AC3 tracks)."
 	echo "     -f, --force      Force processing when AC3 track is detected"
 	echo "     -i, --initial    New AC3 track will be first in the file."
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
@@ -229,6 +231,9 @@ while [ -z "$MKVFILE" ]; do
 			KEEPDTS=0
 			DEFAULT=0
 		;;
+		"--eac3" ) #Convert E-AC3 instead of DTS
+			EAC3=1
+		;;
 		"-f" | "--force" ) # Test for AC3 track exits immediately. Use this to continue
 			FORCE=1
 		;;
@@ -312,6 +317,7 @@ while [ -z "$MKVFILE" ]; do
 				error $"You cannot supply any arguments after the filename. Please check the command syntax below against what has been parsed."
 				echo ""
 				echo $"Control Flags:"
+				printf "  %s: %s" $"Convert E-AC3:" $EAC3
 				printf "  %s: %s" $"Strip DTS:" $NODTS
 				printf "  %s: %s" $"Keep DTS: " $KEEPDTS
 				printf "  %s: %s" $"Set AC3 default: " $DEFAULT
@@ -358,6 +364,13 @@ if [ $EXECUTE = 1 ]; then
 	checkdep ffmpeg
 	checkdep rsync
 	checkdep perl
+fi
+
+# Set DTS or E-AC3
+if [ $EAC3 = 1 ]; then
+	FORMAT="E-AC3"
+else
+	FORMAT="DTS"
 fi
 
 # Make some adjustments based on the version of mkvtoolnix
